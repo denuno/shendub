@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.coldspringframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:util="http://www.coldspringframework.org/schema/util"
+	xsi:schemaLocation="http://www.coldspringframework.org/schema/beans http://coldspringframework.org/schema/coldspring-beans-2.0.xsd 
+	http://www.coldspringframework.org/schema/util http://coldspringframework.org/schema/coldspring-util-2.0.xsd ">
+	
+	<util:json id="json" scope="prototype">
+		<![CDATA[
+			{
+				"array" : [1,2,3,4]
+				,"struct" : { "foo" : "bar" }
+				,"string" : "Frodo Baggins"
+			}
+		]]>
+	</util:json>
+	
+	<util:list id="list">
+		<value>first value</value>
+		<value>second value</value>
+		<value>third value</value>
+	</util:list>
+	
+	<util:map id="map">
+		<entry key="foo">
+			<value>1</value>
+		</entry>
+		<entry key="bar" value="2"/>
+	</util:map>
+	
+	<util:map id="map2" scope="prototype">
+		<entry key="foo">
+			<value>1</value>
+		</entry>
+		<entry key="bar" value="2"/>
+	</util:map>
+	
+	<util:list id="arrayList" list-class="java.util.ArrayList">
+		<value>first value</value>
+		<value>second value</value>
+		<value>third value</value>
+	</util:list>
+	
+	<util:map id="hashMap" map-class="java.util.HashMap">
+		<entry key="foo">
+			<value>1</value>
+		</entry>
+		<entry key="bar" value="2"/>
+	</util:map>
+	
+	<bean id="engine" class="unittests.testBeans.Engine"/>
+	
+	<bean id="carWithMap" class="unittests.testBeans.Car">
+		<constructor-arg name="engine" ref="engine"/>
+		<property name="wheels">
+			<util:map>
+				<entry key="1" value-ref="wheel"/>
+				<entry key="2" value-ref="wheel"/>
+				<entry key="3" value-ref="wheel"/>
+				<entry key="4" value-ref="wheel"/>
+			</util:map>
+		</property>
+	</bean>		
+	
+	<bean id="wheel" class="unittests.testBeans.Wheel" scope="prototype"/>
+</beans>

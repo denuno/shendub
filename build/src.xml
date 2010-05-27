@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<src>
+	<project>
+		<src dest="../" type="git" 
+		uri="git://github.com/denuno/shendub.git" 
+		user="guest" password="guess" />
+	</project>
+	<sources>
+		<src dest="./" type="svn" 
+		uri="http://mxunit.googlecode.com/svn/mxunit/trunk"
+		dirname="mxunit" 
+		user="" password="" />
+
+		<src dest="./" type="svn" 
+		uri="http://svn.model-glue.com/trunk/ModelGlue/" 
+		dirname="ModelGlue" 
+		user="" password="" />
+
+		<!-- 
+		<src dest="./coldspring" type="cvs" 
+		uri=":pserver:anoncvs@cvs.coldspringframework.org:/coldspring" 
+		dirname="coldspring" module="coldspring"
+		user="anoncvs" password="anoncvs" />
+		 -->
+
+		<src dest="./coldspring" type="git" 
+		uri="git://coldspring.git.sourceforge.net/gitroot/coldspring/coldspring" 
+		dirname="coldspring"
+		user="" password="" />
+		
+	</sources>
+</src>

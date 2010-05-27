@@ -1,0 +1,1 @@
+<cfsilent><cfapplication name="shendub" sessionmanagement="true"/></cfsilent>

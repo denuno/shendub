@@ -1,0 +1,242 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.coldspringframework.org/schema/beans" 
+	   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	   xsi:schemaLocation="http://www.coldspringframework.org/schema/beans http://coldspringframework.org/schema/coldspring-beans-2.0.xsd"
+	   default-autowire="no"
+	   default-lazy-init="true"
+	   >
+
+	<bean id="abstractCar" abstract="true" class="unittests.testBeans.Car"/>
+	
+	<alias name="car1" alias="alsoCar1"/>
+	<alias name="myCarBoogaLoo" alias="anotherAliasForCar1"/>
+	   
+	<bean id="car1" name="anotherNameForCar1, myCarBoogaLoo" class="unittests.testBeans.Car" init-method="configure">
+		<constructor-arg name="engine" ref="engine"/>
+		<property name="color" ref="color1" />
+		<property name="make" value="Mustang"/>
+		<property name="wheels">
+			<map>
+				<entry key="1">
+					<bean class="unittests.testBeans.Wheel"/>
+				</entry>
+				<entry key="2">
+					<bean class="unittests.testBeans.Wheel"/>
+				</entry>
+				<entry key="3">
+					<bean class="unittests.testBeans.Wheel"/>
+				</entry>
+				<entry key="4">
+					<bean class="unittests.testBeans.Wheel"/>
+				</entry>
+				<entry key="spare">
+					<bean class="unittests.testBeans.Wheel"/>
+				</entry>
+			</map>
+		</property>
+	</bean>
+	
+	<bean id="car2" parent="abstractCar">
+		<constructor-arg name="engine">
+			<description>Here is the engine</description>
+			<meta key="engineMeta" value="engineMetaValue"/>
+			<meta key="engineMeta2" value="engineMetaValue2"/>
+			<ref bean="engine"/>
+		</constructor-arg>
+		<property name="color">
+			<description>Here is a colour</description>
+			<ref bean="color2"/>
+		</property>
+		<property name="make">
+			<value>Mustang</value>
+		</property>
+		<property name="wheels">
+			<map>
+				<entry key="1" value-ref="wheel"/>
+				<entry key="2" value-ref="wheel"/>
+				<entry key="3" value-ref="wheel"/>
+				<entry key="4" value-ref="wheel"/>
+				<entry key="spare" value-ref="wheel"/>
+			</map>
+		</property>
+	</bean>
+	
+	<bean id="car3" class="unittests.testBeans.Car" autowire="byName">
+		<property name="make">
+			<value>Mustang</value>
+		</property>
+		<property name="wheels">
+			<map>
+				<entry key="1">
+					<ref bean="wheel"/>
+				</entry>
+				<entry key="2">
+					<ref bean="wheel"/>
+				</entry>
+				<entry key="3">
+					<ref bean="wheel"/>
+				</entry>
+				<entry key="4">
+					<ref bean="wheel"/>
+				</entry>
+				<entry key="spare">
+					<ref bean="wheel"/>
+				</entry>
+			</map>
+		</property>		
+	</bean>
+	
+	<bean id="car4" class="unittests.testBeans.Car">
+		<meta key="keyValue1" value="metaValue1"/>
+		<meta key="keyValue2" value="metaValue2"/>
+		<constructor-arg name="engine">
+			<bean class="unittests.testBeans.Engine">
+				<property name="gears">
+					<list>
+						<value>1</value>
+						<value>2</value>
+						<value>3</value>
+					</list>
+				</property>			
+			</bean>
+		</constructor-arg>
+		<property name="color">
+			<bean class="unittests.testBeans.Color">
+				<constructor-arg name="name" value="blue"/>
+			</bean>
+		</property>
+		<property name="make">
+			<meta key="makeBrand" value="Ford"/>
+			<value>Mustang</value>
+		</property>
+		<property name="wheels">
+			<map>
+				<entry key="1" value-ref="wheel"/>
+				<entry key="2" value-ref="wheel"/>
+				<entry key="3" value-ref="wheel"/>
+				<entry key="4" value-ref="wheel"/>
+				<entry key="spare" value-ref="wheel"/>
+			</map>
+		</property>		
+	</bean>
+	
+	<bean id="parentCar" name="parentAlias" class="unittests.testBeans.Car" init-method="configure" abstract="true">
+		<meta key="keyValue1" value="metaValue1"/>
+		<meta key="keyValue2" value="metaValue2"/>	
+		<constructor-arg name="engine" ref="childEngine"/>
+		<property name="color" ref="color1" />
+		<property name="wheels">
+			<map>
+				<entry key="1" value-ref="wheel"/>
+				<entry key="2" value-ref="wheel"/>
+				<entry key="3" value-ref="wheel"/>
+				<entry key="4" value-ref="wheel"/>
+				<entry key="spare" value-ref="wheel"/>
+			</map>
+		</property>
+	</bean>
+	
+	<bean id="childEngine" parent="engine"/>
+	
+	<bean id="childCar" parent="parentAlias">
+		<property name="make">
+			<meta key="makeBrand" value="Ford"/>
+			<value>Mustang</value>
+		</property>
+	</bean>
+	
+	<!-- factory methods -->
+	<bean id="car5" class="unittests.testBeans.Car">
+		<constructor-arg name="engine" ref="engineChild"/>
+		<property name="color" ref="colorChild" />
+		<property name="make" value="Mustang"/>
+		<property name="wheels">
+			<map>
+				<entry key="1">
+					<ref bean="wheelChild"/>
+				</entry>
+				<entry key="2">
+					<ref bean="wheelChild"/>
+				</entry>
+				<entry key="3">
+					<ref bean="wheelChild"/>
+				</entry>
+				<entry key="4">
+					<ref bean="wheelChild"/>
+				</entry>
+				<entry key="spare">
+					<ref bean="wheelChild"/>
+				</entry>
+			</map>
+		</property>
+	</bean>	
+	
+	<bean id="carFactory" class="unittests.testBeans.factory.CarFactory"/>
+	<bean id="engineChild" factory-bean="carFactory" factory-method="getEngine">
+		<constructor-arg name="gears">
+			<list>
+				<value>1</value>
+				<value>2</value>
+				<value>3</value>
+			</list>
+		</constructor-arg>		
+	</bean>
+	
+	<bean id="colorChild" factory-bean="carFactory" factory-method="getColor">
+		<property name="name" value="blue"/>
+	</bean>
+	
+	<bean id="wheelChild" factory-bean="carFactory" factory-method="getWheel" scope="request"/>
+	
+	<!-- /factory methods -->
+	
+	<bean id="carSimpleMap" class="unittests.testBeans.Car">
+		<constructor-arg name="engine" ref="engine"/>
+		<property name="wheels">
+			<map>
+				<entry key="dog" value="red"/>
+				<entry key="john" value="soda"/>
+			</map>
+		</property>
+	</bean>
+
+	<bean id="carObjectKeyMap" class="unittests.testBeans.Car">
+		<constructor-arg name="engine" ref="engine"/>
+		<property name="wheels">
+			<map>
+				<entry key-ref="color1" value="frodo"/>
+				<entry key-ref="color2" value="baggins"/>
+			</map>
+		</property>
+	</bean>
+	   
+	<bean id="engine" class="unittests.testBeans.Engine">
+		<property name="gears">
+			<list>
+				<value>1</value>
+				<value>2</value>
+				<value>3</value>
+			</list>
+		</property>
+	</bean>
+
+	<bean id="color" class="unittests.testBeans.Color">
+		<constructor-arg name="name" value="blue"/>
+	</bean>
+
+	<bean id="color1" class="unittests.testBeans.Color">
+		<constructor-arg name="name" value="blue"/>
+	</bean>
+
+	<bean id="color2" class="unittests.testBeans.Color">
+		<constructor-arg name="name">
+			<value>blue</value>
+		</constructor-arg>
+	</bean>
+	
+	<bean id="wheel" class="unittests.testBeans.Wheel" scope="prototype"/>
+	
+	<!-- test lazy init's -->
+	<bean id="nameToRequest1" class="unittests.testBeans.BeanNameToRequest" init-method="configure"/>
+	<bean id="nameToRequest2" class="unittests.testBeans.BeanNameToRequest" init-method="configure" lazy-init="false"/>
+</beans>

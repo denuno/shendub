@@ -1,0 +1,115 @@
+<project name="ormtests.build" default="build.localdev" basedir="./"
+	xmlns:antcontrib="antlib:net.sf.antcontrib">
+	<property name="distro.name" value="shendub" />
+	<!--
+	<property name="default.cfengine" value="acf" />
+	-->
+	<property name="default.cfengine" value="railo" />
+	<property name="src.dir" location="../src" />
+	<property name="temp.dir" location="./temp" />
+	<property name="log.dir" location="./temp" />
+
+	<property name="dist.dir" location="./dist" />
+	<property name="pub.dir" location="../pub" />
+	<property name="tests.dir" location="../tests" />
+	<property name="conf.dir" location="../conf" />
+	<property name="cfadmin.password" value="testtest" />
+	<property name="runwar.port" value="8080" />
+	<!-- if add.libs.dir is set, any jars will be copied to war.lib.dir -->
+	<property name="add.libs.dir" value="../lib" />
+	<!-- if cfantrunner.install is set the custom tag and libs are added -->
+	<property name="cfantrunner.install" value="true" />
+
+	<property name="urlrewritefilter.log.level" value="WARN" />
+	<property name="urlrewritefilter.reload.interval" value="-1" />
+
+	<property name="railo.patch.version" value="3.1.2.012" />
+	<property name="railo.patch.buildtype" value="dev" />
+
+	<import file="${basedir}/../../../../workspace/cfdistro/src/cfdistro/build.xml" />
+
+	<target name="build.localdev" depends="src.to.mappings.xml">
+		<!-- add the docs and test mappings for tests and fileservlet -->
+		<!--
+		<mapping physical="${basedir}/../../docs" virtual="/docs"/>
+		-->
+		<mapping physical="${basedir}/../tests" virtual="/tests" />
+		<mapping physical="${basedir}/../pub" virtual="/pub" />
+		<mapping physical="${src.dir}/cfdistro/org" virtual="/org" />
+		<antcontrib:if>
+			<equals arg1="${default.cfengine}" arg2="acf" />
+			<then>
+				<echo message="Running ACF, not adding hibernate jars" />
+				<property name="dont.add.libs" value="true" />
+			</then>
+		</antcontrib:if>
+		<antcontrib:runtarget target="cfdistro.build.localdev" />
+		<fileservlet servletname="fileServlet" directory="${src.dir}/../pub"
+			urlpattern="/pub/*" />
+		<!--
+			getting "Failed to specify text in replace" means you need to escape
+			& like so: &amp;amp;
+		-->
+		<antcontrib:runtarget target="urlrewritefilter.servlet.install" />
+		<urlrewrite name="dirToCfm" from="(.*)/$" to="$1/index.cfm"
+			type="forward" />
+		<urlrewrite name="railoContext" from="/railo-context/(.*)"
+			to="/railo-context/$1" type="forward" last="true" />
+		<urlrewrite name="cfide" from="/CFIDE/(.*)" to="/CFIDE/$1"
+			type="forward" last="true" />
+		<urlrewrite name="noRailoAdmin" from="/railo-context/admin/(.*)"
+			to="/" type="forward" enabled="false" />
+		<urlrewrite name="tests" from="/tests/(.*)" to="/tests/$1"
+			type="forward" last="true" />
+		<urlrewrite name="bypass" from="/\^/(.*)" to="/$1"
+			type="forward" last="true" />
+		<urlrewrite name="root" from="^/$" to="/index.cfm" type="forward" />
+		<urlrewrite name="rootToPub" from="/(.*)" to="/pub/$1"
+			type="forward" />
+		<urlrewriteout name="pubToRoot" from="^/pub/(.*)" to="/$1" />
+		<urlrewrite name="urlToEvent" note="SEO URLS"
+			from="^/pub/([a-z]+)/([a-z]+)/?$" to="/pub/index.cfm\?event=$1.$2" last="true"/>
+		<urlrewrite name="urlToEventId" from="^/pub/([a-z]+)/([a-z]+)/(\d+)$" to="/pub/index.cfm\?event=$1.$2&amp;amp;id=$3" last="true"/>
+		<urlrewriteout name="eventToUrl" note="REWRITE REQUEST.ENCODEURL() URLS"
+			from=".*index.cfm\?event=([a-z]+)\.([a-z]+)&amp;amp;?(id=)?(.*)$" to="/$1/$2/$4"/>
+		<urlrewriteout name="rootToContextPath" from="/(.*)"
+			to="%{context-path}/$1" type="forward" />
+
+		<!--
+			<echo file="${war.temp.dir}/index.cfm" message="&lt;cflocation
+			url=&quot;/cfdistro/cfmlapp/&quot;&gt;"/>
+		-->
+		<antcontrib:if>
+			<equals arg1="${default.cfengine}" arg2="acf" />
+			<then>
+				<copy todir="${war.temp.dir}/mxunit" verbose="false">
+					<fileset dir="${src.dir}/mxunit" />
+				</copy>
+				<copy todir="${war.temp.dir}/tests" verbose="false">
+					<fileset dir="${src.dir}/../tests" />
+				</copy>
+				<copy todir="${war.temp.dir}/pub" verbose="false">
+					<fileset dir="${src.dir}/../pub" />
+				</copy>
+				<copy todir="${war.temp.dir}/WEB-INF/lib" file="${add.libs.dir}/h2.jar"
+					verbose="true" />
+			</then>
+		</antcontrib:if>
+	</target>
+
+	<target name="build.localdev.start.launch">
+		<antcontrib:runtarget target="cfdistro.build.localdev.start.launch" />
+	</target>
+
+	<target name="build.localdev.start" depends="build.localdev">
+		<antcontrib:runtarget target="runwar.start.background" />
+	</target>
+	<target name="build.localdev.stop">
+		<antcontrib:runtarget target="runwar.stop" />
+	</target>
+
+	<target name="build.war.binary" depends="compile-cf">
+		<antcall target="add-cfantrunner" />
+		<antcall target="cfdistro.build.war.binary" />
+	</target>
+</project>

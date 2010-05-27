@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+   Copyright 2010 Mark Mandel
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+       http://www.apache.org/licenses/LICENSE-2.0
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+ --> 
+<project name="narwhal" default="deploy">
+	
+	<!--
+		The following dependencies are required to be the classpath  
+		for this ant build script to run.
+		
+		FTP Task: net-common-2.0.jar
+		MXUnit Task: mxunit-ant.jar
+	-->
+	<taskdef name="mxunittask" classname="org.mxunit.ant.MXUnitAntTask" /> 
+	
+	<!-- GENERAL PROPERTIES -->
+	<property name="src" location="./coldspring" />
+	<property name="tmp" location="/tmp" />
+	<property name="coldspring.version" value="2.0" />
+	<property name="coldspring.server" value="www.coldspringframework.org"/>
+	<property name="coldspring.server.schema" value="/Application/schema"/>
+	<property name="coldspring.sourceforge.server" value="web.sourceforge.net"/>
+	<property name="coldspring.sourceforge.docs" value="/home/groups/c/co/coldspring/htdocs/ber/docs"/>
+	<property name="coldspring.localserver" value="cf9"/>
+	<property name="coldspring.localport" value="94"/>
+	<property name="docs" location="./docs"/>
+	<property name="docs.xsddoc" location="${docs}/xsd"/>
+	<property name="docs.api" location="${docs}/api"/>
+	<property name="xsddoc" location="${docs}/gen/xsddoc"/>
+	<property name="xsddoc.lib" location="${xsddoc}/lib"/>
+	<property name="xsddoc.templates" location="${xsddoc}/templates"/>
+	
+	<!-- ================================= 
+          target: deploy              
+         ================================= -->
+    <target name="deploy" depends="" description="Deploy the current build of ColdSpring">
+    	<antcall target="unittest" />
+    	<antcall target="upload-schemas"/>
+    	<antcall target="xsddoc"/>
+    	<antcall target="colddoc"/>
+    	<antcall target="upload-documentation"/>
+    </target>
+	
+	<!-- - - - - - - - - - - - - - - - - - 
+          target: unittest                      
+         - - - - - - - - - - - - - - - - - -->
+    <target name="unittest">
+    	<mxunittask server="${coldspring.localserver}" port="${coldspring.localport}"
+    		haltonerror="true"
+    		haltonfailure="true"
+    		defaultrunner="/unittests/HttpAntRunner.cfc"
+    		verbose="true"
+    		>
+    		<directory path="/unittests" componentpath="unittests" recurse="true"/>
+    	</mxunittask>
+    </target>
+
+	<!-- - - - - - - - - - - - - - - - - - 
+          target: uploadSchemas                      
+         - - - - - - - - - - - - - - - - - -->
+    <target name="upload-schemas" description="upload schemas to the ColdSpring website">
+		<input addproperty="schema-upload.do" message="Should we upload the XSDs?" validargs="Y,N" />
+		<antcall target="upload-schemas-${schema-upload.do}" />
+    </target>
+    
+	<target name="upload-schemas-Y">
+		<echo message="Uploading Schemas to ${coldspring.server}"/>
+		<input addproperty="upload.schema.user" message="What is the FTP Username?"></input>
+		<input addproperty="upload.schema.password" message="What is the FTP Password?"></input>
+		
+		<ftp server="${coldspring.server}" userid="${upload.schema.user}" password="${upload.schema.password}" 
+			 remotedir="${coldspring.server.schema}">
+			<fileset file="${src}/beans/xml/config/coldspring-beans-${coldspring.version}.xsd"/>
+			<fileset file="${src}/beans/xml/config/coldspring-util-${coldspring.version}.xsd"/>
+		</ftp>
+    </target>	
+	<target name="upload-schemas-N"/>
+	
+	<!-- - - - - - - - - - - - - - - - - - 
+          target: colddoc                      
+         - - - - - - - - - - - - - - - - - -->
+    <target name="colddoc" depends="colddoc-clean">
+    	<get src="http://${coldspring.localserver}:${coldspring.localport}/docs/gen/colddoc/run.cfm" dest="${tmp}/colddoc.html" />
+    	<loadfile property="colddoc.return" srcfile="${tmp}/colddoc.html"></loadfile>
+    	<echo message="Colddoc: ${colddoc.return}"></echo>
+    	<condition property="colddoc.complete">
+			<contains string="${colddoc.return}" substring="Done!" casesensitive="false" />
+    	</condition>
+    	<echo message="Colddoc: ${colddoc.complete}"></echo>
+    	<antcall target="colddoc-${colddoc.complete}" />
+    </target>
+	<target name="colddoc-true"></target>
+	<target name="colddoc-false">
+		<fail message="Error with ColdDoc"/>
+	</target>
+	
+	<!-- - - - - - - - - - - - - - - - - - 
+          target: colddoc-clean                      
+         - - - - - - - - - - - - - - - - - -->
+    <target name="colddoc-clean">
+    	<delete dir="${docs.api}/coldspring"/>    
+    </target>
+
+	<!-- - - - - - - - - - - - - - - - - - 
+          target: xsddoc                      
+          Generates each of the xsddoc generation
+         - - - - - - - - - - - - - - - - - -->
+    <target name="xsddoc" depends="xsddoc-clean">
+		<mkdir dir="${docs.xsddoc}/beans"/>
+    	<mkdir dir="${docs.xsddoc}/util"/>
+    	
+    	<!-- beans documentation -->
+    	<antcall target="xsddoc-gen">
+			<param name="xsdfile" value="${src}/beans/xml/config/coldspring-beans-${coldspring.version}.xsd"/>
+			<param name="xsdout" value="beans"/>
+    		<param name="xsdtitle" value="ColdSpring ${coldspring.version} Beans Schema"/>
+		</antcall>
+		<antcall target="xsddoc-gen">
+			<param name="xsdfile" value="${src}/beans/xml/config/coldspring-util-${coldspring.version}.xsd"/>
+			<param name="xsdout" value="util"/>
+    		<param name="xsdtitle" value="ColdSpring ${coldspring.version} Util Schema"/>
+		</antcall>
+    </target>	
+	
+	<!-- - - - - - - - - - - - - - - - - - 
+          target: xsddoc-clean                      
+         - - - - - - - - - - - - - - - - - -->
+    <target name="xsddoc-clean">
+		<delete dir="${docs.xsddoc}/beans"/>
+    	<delete dir="${docs.xsddoc}/util"/>
+    </target>
+	
+	<target name="upload-documentation">
+		<input addproperty="upload-documentation.do" message="Should we upload the Documentation to Sourceforge?" validargs="Y,N" />
+		<antcall target="upload-documentation-${upload-documentation.do}" />		
+	</target>
+	<target name="upload-documentation-N"/>
+	
+	<target name="upload-documentation-Y">
+		<input addproperty="upload-documentation.user" message="What is the Sourceforge Username?"></input>
+		
+		<echo message="Rsync Schemas from ${coldspring.sourceforge.server}"/>
+		<property name="rsync.line" value="-rv --delete --exclude=/gen ./ ${upload-documentation.user}@${coldspring.sourceforge.server}:${coldspring.sourceforge.docs}"/>
+		<echo message="rsync ${rsync.line}"/>
+		<exec executable="rsync" dir="${docs}" logerror="true">
+			<arg line="${rsync.line}"/>
+		</exec>
+	</target>
+	
+	<!-- - - - - - - - - - - - - - - - - - 
+          target: xsddoc-gen                      
+         - - - - - - - - - - - - - - - - - -->
+	<target name="xsddoc-gen">
+		<property name="cp" value="${xsddoc.lib}/xml-apis.jar;${xsddoc.lib}/xercesImpl.jar;${xsddoc.lib}/docflex-xml-re.jar"/>
+		<!--
+		   Execute the DocFlex/XML generator.
+		
+		   IMPORTANT: The 'maxmemory' attribute sets the maximum heap size
+		   available to Java VM when running DocFlex/XML. 
+		   Check this attribute when you need to process large quantities of data
+		   (e.g. when you generate documentation by XML schemas with a great number
+		   of component definitions).
+		
+		   The 'fork' attribute forces Ant to launch a separate instance of JVM.
+		   This is needed to ensure that the memory specified in the 'maxmemory' 
+		   attribute will be allocated indeed. However, you may remain using Ant's 
+		   JVM instance, if you have already specified for it that much of memory.
+		-->
+		<java classname="com.docflex.xml.Generator" classpath="${cp}" maxmemory="512m" fork="true">
+		
+			<!-- specify the template -->
+			<arg value="-template"/>
+			   <arg value="${xsddoc.templates}/XSDDoc/FramedDoc.tpl"/>
+			
+			   <!-- specify the output format -->
+			<arg value="-format"/>
+			<arg value="HTML"/>
+			
+			<!-- specify the output directory -->
+			<arg value="-d"/>
+			<arg value="${docs.xsddoc}/${xsdout}"/>
+			
+			<!-- specify to not launch the generator GUI -->
+			<arg value="-nodialog"/>
+			
+			<!-- specify to not launch the default viewer for the output file -->
+			<arg value="-launchviewer=false"/>
+			
+			<!-- pass the template parameter (the documentation title, in this case) -->
+			<arg value="-p:docTitle=${xsdtitle}"/> 
+			<arg value="-p:html.renderLineBreaks=true"/>
+			<!-- 
+			  Specify the data source XML file to be processed by the specified template. 
+			  (In this case, it is the XML schema to be documented.)
+			-->
+			<arg value="${xsdfile}"/>
+		
+		</java>
+	</target>
+</project>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mappings>
+<mapping physical="/workspace/shendub/src/ModelGlue" virtual="/ModelGlue"/>
+<mapping physical="/workspace/shendub/src/coldspring" virtual="/coldspring"/>
+<mapping physical="/workspace/shendub/src/mxunit" virtual="/mxunit"/>
+<mapping physical="/workspace/shendub/src/shendub" virtual="/shendub"/>
+<mapping physical="/workspace/shendub/build/../tests" virtual="/tests"/>
+<mapping physical="/workspace/shendub/build/../pub" virtual="/pub"/>
+<mapping physical="/workspace/shendub/src/cfdistro/org" virtual="/org"/>
+</mappings>
